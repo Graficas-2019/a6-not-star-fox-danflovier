@@ -74,8 +74,8 @@ function createScene(canvas) {
     // Create a group to hold all the objects
     root = new THREE.Object3D;
     
-    spotLight = new THREE.SpotLight (0xffffff);
-    spotLight.position.set(-150, 20, -10);
+    spotLight = new THREE.SpotLight (0x888888);
+    spotLight.position.set(0, 170, 0);
     spotLight.target.position.set(-2, 0, -2);
     root.add(spotLight);
 
@@ -262,6 +262,7 @@ function generateGame(deltat, now){
 		}
 
         if ( enemies.length > 0 ) {
+        	
             for(var i = 0; i < enemies.length; i++){
 
             	if (enemies[i].type == "spaceship"){
@@ -290,10 +291,11 @@ function generateGame(deltat, now){
                     } 
                 }
 
+                arwing.box.setFromObject(arwing);
                 if(arwing.box.intersectsBox(enemies[i].box.setFromObject(enemies[i]))){
                     if (enemies[i].alive == 1){
                         if(enemies[i].score == 1){
-                        
+                        	
                             if(enemies[i].type == "rock"){
                                 updateLife(-20);
                                 //console.log("Roca -20");
@@ -312,8 +314,8 @@ function generateGame(deltat, now){
                                 spawn--;
                             }
                             enemies[i].alive = 0;
-                            scene.remove(enemies[i]);
-                            enemies.splice(i, 1);
+                           	//scene.remove(enemies[i]);
+                            //enemies.splice(i, 1);
                         }
                     }
                 }
