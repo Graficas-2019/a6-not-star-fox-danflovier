@@ -5,6 +5,7 @@ root = null,
 group = null;
 
 var game = false,
+life = 0,
 score = 0,
 highScore = 0,
 spawn = 0,
@@ -35,14 +36,6 @@ var animateGrass = true;
 
 var objLoader = null;
 var mtlLoader = null;
-
-var currentTimeSpawn = Date.now(); 
-
-var nEnemies = 3;
-
-var spawnTrees = 0,
-spawnSpaceships = 0,
-spawnRocks = 0;
 
 var currTreeTime = 0,
 currSpaceShipTime = 0,
@@ -174,9 +167,10 @@ function animate() {
 function startGame() {
     
     score = 0;
+    life = 3000;
     spawn = 0;
     id = 0;
-    nEnemies = 3;
+    nEnemies = 15;
 
     if(enemies.length > 0){
         for(var i = 0; i < enemies.length; i++){
@@ -193,17 +187,25 @@ function startGame() {
     enemies = [];
     shots = [];
 
-    spawnTrees = 0;
-    spawnSpaceships = 0;
-    spawnSpaceships = 0;
     document.getElementById("btn-start").hidden = true;
     document.getElementById("score").innerHTML = "Score: " + score;
     document.getElementById("timer").innerHTML = 60;
+    document.getElementById("life").innerHTML = life;
     document.getElementById("overlay").hidden = true;
 
     clock = new THREE.Clock();
     game = true;
 
+}
+
+function endGame(message){
+    game = false;
+
+    updateHighScore();
+    document.getElementById("timer").innerHTML = message;
+    document.getElementById("btn-start").hidden = false;
+    document.getElementById("btn-start").value = "Restart Game";
+    document.getElementById("overlay").hidden = false;
 }
 
 function generateGame(deltat, now){
@@ -216,52 +218,50 @@ function generateGame(deltat, now){
         if (seconds > 0){
             updateTimer(seconds);
 
+            if (life == 0){
+                seconds = 0;
+                endGame("¡GAME OVER! :(");                
+            }
+
         }
         else{
             seconds = 0;
-            game = false;
-
-            updateHighScore();
-
-            document.getElementById("timer").innerHTML = "¡GAME FINISHED!";
-            document.getElementById("btn-start").hidden = false;
-            document.getElementById("btn-start").value = "Restart Game";
-            document.getElementById("overlay").hidden = false;
+            endGame("¡YOU WON!");
         }
         
-        if (spawnRocks < nEnemies) {
+        if (spawn < nEnemies) {
             if(timeRocks > nextRock) {
                 currRockTime = now;
-                spawnRocks++;
-                nextRock = 1000;
+                spawn++;
+                nextRock = 900;
 
                 cloneEnemies("rock");
 
             }
         }
 
-    	if (spawnTrees < nEnemies) {
+    	if (spawn < nEnemies) {
         	if(timeTrees > nextTree) {
                 currTreeTime = now;
-                spawnTrees++;
-	            nextTree = 500;
+                spawn++;
+	            nextTree = 400;
 	            
 	            cloneEnemies("tree");
         	}
     	}
 
-	    if (spawnSpaceships < nEnemies) {
+	    if (spawn < nEnemies) {
 	        if(timeSpaceships > nextSpaceship) {
 	            currSpaceShipTime = now;
-                spawnSpaceships++;
-                nextSpaceship = 450;
+                spawn++;
+                nextSpaceship = 200;
 	            
 	            cloneEnemies("spaceship");
 
 	        }
 		}
 
-        if ( enemies.length > 0) {
+        if ( enemies.length > 0 ) {
             for(var i = 0; i < enemies.length; i++){
 
             	if (enemies[i].type == "spaceship"){
@@ -277,52 +277,109 @@ function generateGame(deltat, now){
             		enemies[i].rotation.x += 0.010 * deltat;
             	}
             	
-                if (enemies[i].alive == 0){
-                    if(enemies[i].score == 1){
-                        enemies[i].score = 0;
-                        updateScore(1);
-                        spawn--;
-                        scene.remove(enemies[i]);
-
-                    }
-                }
-
                 if (enemies[i].alive == 1){
                     if(enemies[i].position.z > 100 ) {  
 
                         if(enemies[i].score == 1){
                             enemies[i].score = 0;
-                            updateScore(-1);
+                            updateScore(-25);
                             spawn--;
-                            spawnSpaceships--;
-                            spawnTrees--;
-                            spawnRocks--;
                             scene.remove(enemies[i]);
-                            //console.log(enemies.length);
+                            enemies.splice(i, 1);
                         }
                     } 
                 }
-                
+
+                if(arwing.box.intersectsBox(enemies[i].box.setFromObject(enemies[i]))){
+                    if (enemies[i].alive == 1){
+                        if(enemies[i].score == 1){
+                        
+                            if(enemies[i].type == "rock"){
+                                updateLife(-20);
+                                //console.log("Roca -20");
+                                spawn--;
+                            }
+
+                            if(enemies[i].type == "tree"){
+                                updateLife(-35);
+                                //console.log("Árbol -35");
+                                spawn--;
+                            }
+
+                            if(enemies[i].type == "spaceship"){
+                                updateLife(-50);
+                                //console.log("Nave -50");
+                                spawn--;
+                            }
+                            enemies[i].alive = 0;
+                            scene.remove(enemies[i]);
+                            enemies.splice(i, 1);
+                        }
+                    }
+                }
             }
         }
+        if ( shots.length > 0 ){
+            for(var j = 0; j < shots.length; j++){
+                shots[j].position.z -= 0.5 * deltat;
+                
+                if(shots[j].position.z == -150) {
+                    scene.remove(shots[j]);
+                }
 
-        if ( shots.length > 0) {
-	        for(var i = 0; i < shots.length; i++) {
-	        	shots[i].position.z -= 0.5 * deltat;
-		        if(shots[i].position.z == -150) {
-		            scene.remove(shots[i]);
-		        }
-			}
-		}
+                shots[j].box.setFromObject(shots[j]);
+                for(var k = 0; k < enemies.length; k++){
 
+                    if(shots[j].box.intersectsBox(enemies[k].box) && shots[j].alive == 1){
+                        scene.remove(shots[j]);
+
+                        if (enemies[k].alive == 1){
+                            if(enemies[k].score == 1){
+                                enemies[k].alive = 0;
+                            }
+                        }
+
+                        if (enemies[k].alive == 0){
+                            if(enemies[k].score == 1){
+
+                                enemies[k].score = 0;
+                                shots[j].alive = 0;
+                                scene.remove(enemies[k]);
+
+                                if(enemies[k].type == "rock"){
+                                    updateScore(500);
+                                    //console.log("Roca +500");
+                                    spawn--;
+                                }
+
+                                if(enemies[k].type == "tree"){
+                                    updateScore(750);
+                                    //console.log("Árbol +750");
+                                    spawn--;
+                                }
+
+                                if(enemies[k].type == "spaceship"){
+                                    updateScore(1000);
+                                    //console.log("Nave +1000");
+                                    spawn--;
+                                }
+
+                                enemies.splice(k, 1);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 }
 
+
 function cloneEnemies(type) {
-	var x = getRandomArbitrary(35, -35);
+	var x = getRandomArbitrary(30, -30);
 	var z = getRandomArbitrary(-250, -260);
 	
 	if (type == "spaceship"){
-    	var y = getRandomArbitrary(10, 15);
+    	var y = getRandomArbitrary(8, 15);
 
     	var clone = spaceship.clone();
     	clone.position.set(x, y, z);
@@ -337,9 +394,10 @@ function cloneEnemies(type) {
 
 	if (type == "rock"){
 		var clone = rock.clone();
-		clone.position.set(x, -1, z);
-		
+		clone.position.set(x, -1, z);	
 	}
+
+    clone.box = new THREE.Box3();
     clone.score = 1;
     clone.alive = 1;
     clone.type = type;
@@ -353,6 +411,8 @@ function cloneLaser(position) {
 	var clone = laser.clone();
    
     clone.position.set(position.x, position.y, position.z);
+    clone.alive = 1;
+    clone.box = new THREE.Box3();
 
     shots.push(clone);
     scene.add(clone);
@@ -385,7 +445,7 @@ function onKeyDown(event){
     if ( event.keyCode == 68 || event.keyCode == 39 ) {
     	//console.log("Derecha");
         if(arwing.position.x <= 30){
-        	arwing.position.x += 3.75;
+        	arwing.position.x += 1.75;
     	}
 
 	}
@@ -394,7 +454,7 @@ function onKeyDown(event){
     if ( event.keyCode == 65 || event.keyCode == 37 ) {
     	//console.log("Izquierda");
         if(arwing.position.x >= -30){
-        	arwing.position.x -= 3.75;
+        	arwing.position.x -= 1.75;
     	}
     }
 }
@@ -440,7 +500,8 @@ function loadObj() {
                     // load Arwing
                     if (index == 1){
                     	arwing = object;
-                		arwing.scale.set(0.02, 0.02, 0.02);
+
+                		arwing.scale.set(0.04, 0.04, 0.04);
                 		
                 		arwing.position.x = 0;
                 		arwing.position.y = 15;
@@ -448,12 +509,15 @@ function loadObj() {
 
                 		arwing.rotation.x = 0;
                 		arwing.rotation.y = Math.PI;
+
+                        arwing.box = new THREE.Box3().setFromObject(arwing);
+
                 		group.add(object);
                     }
                     // load Laser
                     if (index == 2){
                     	laser = object;
-                		laser.scale.set(0.5, 0.5, 0.5);
+                		laser.scale.set(0.7, 0.7, 0.7);
                 		laser.position.z = 0;
                 		laser.position.x = 0;
 
@@ -540,6 +604,11 @@ function updateHighScore() {
         highScore = score;
         document.getElementById("high-score").innerHTML = "High Score: " + highScore;
     }
+}
+
+function updateLife(n) {
+    life = life + (n);
+    document.getElementById("life").innerHTML = life;
 }
 
 function getRandomArbitrary(min, max) {

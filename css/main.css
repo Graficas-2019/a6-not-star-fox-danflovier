@@ -39,19 +39,25 @@ body {
 
 #score {
 	position:absolute;
-	left:26%;
+	left:30%;
 	top:10px;
 }
 
 #timer {
 	position:absolute;
-	left:46%;
+	left:50%;
+	top:10px;
+}
+
+#life{
+	position:absolute;
+	left:68%;
 	top:10px;
 }
 
 #high-score{
 	position:absolute;
-	left:66%;
+	left:80%;
 	top:10px;
 }
 
