@@ -46,6 +46,7 @@ nextTree = 1500,
 nextRock = 1500;
 
 var enemies = [];
+var obstacles = [];
 var shots = [];
 function createScene(canvas) {
     
@@ -178,6 +179,12 @@ function startGame() {
         }   
     }
 
+    if(obstacles.length > 0){
+        for(var i = 0; i < obstacles.length; i++){
+            scene.remove(obstacles[i]);
+        }   
+    }
+
     if(shots.length > 0){
         for(var i = 0; i < shots.length; i++){
             scene.remove(shots[i]);
@@ -185,6 +192,7 @@ function startGame() {
     }
 
     enemies = [];
+    obstacles = [];
     shots = [];
 
     document.getElementById("btn-start").hidden = true;
@@ -218,7 +226,7 @@ function generateGame(deltat, now){
         if (seconds > 0){
             updateTimer(seconds);
 
-            if (life == 0){
+            if (life <= 0){
                 seconds = 0;
                 endGame("¡GAME OVER! :(");                
             }
@@ -226,7 +234,7 @@ function generateGame(deltat, now){
         }
         else{
             seconds = 0;
-            endGame("¡YOU WON!");
+            endGame("¡YOU WON! :)");
         }
         
         if (spawn < nEnemies) {
@@ -235,7 +243,7 @@ function generateGame(deltat, now){
                 spawn++;
                 nextRock = 900;
 
-                cloneEnemies("rock");
+                cloneObj("rock");
 
             }
         }
@@ -246,7 +254,7 @@ function generateGame(deltat, now){
                 spawn++;
 	            nextTree = 400;
 	            
-	            cloneEnemies("tree");
+	            cloneObj("tree");
         	}
     	}
 
@@ -256,7 +264,7 @@ function generateGame(deltat, now){
                 spawn++;
                 nextSpaceship = 200;
 	            
-	            cloneEnemies("spaceship");
+	            cloneObj("spaceship");
 
 	        }
 		}
@@ -269,10 +277,6 @@ function generateGame(deltat, now){
             		enemies[i].position.z += 0.095 * deltat;
             	}
 
-            	if (enemies[i].type == "tree"){
-            		enemies[i].position.z += 0.075 * deltat;
-            	}
-
             	if (enemies[i].type == "rock"){
             		enemies[i].position.z += 0.050 * deltat;
             		enemies[i].rotation.x += 0.010 * deltat;
@@ -282,6 +286,7 @@ function generateGame(deltat, now){
                     if(enemies[i].position.z > 100 ) {  
 
                         if(enemies[i].score == 1){
+                        	console.log("-25 Dejó pasar");
                             enemies[i].score = 0;
                             updateScore(-25);
                             spawn--;
@@ -298,28 +303,57 @@ function generateGame(deltat, now){
                         	
                             if(enemies[i].type == "rock"){
                                 updateLife(-20);
-                                //console.log("Roca -20");
-                                spawn--;
-                            }
-
-                            if(enemies[i].type == "tree"){
-                                updateLife(-35);
-                                //console.log("Árbol -35");
+                                console.log("Roca -20");
                                 spawn--;
                             }
 
                             if(enemies[i].type == "spaceship"){
                                 updateLife(-50);
-                                //console.log("Nave -50");
+                                console.log("Nave -50");
                                 spawn--;
                             }
                             enemies[i].alive = 0;
-                           	//scene.remove(enemies[i]);
-                            //enemies.splice(i, 1);
                         }
                     }
                 }
             }
+        }
+
+        if ( obstacles.length > 0 ) {
+        	for(var i = 0; i < obstacles.length; i++){
+
+        		if (obstacles[i].type == "tree"){
+            		obstacles[i].position.z += 0.075 * deltat;
+            	}
+
+            	if (obstacles[i].alive == 1){
+                    if(obstacles[i].position.z > 100 ) {  
+
+                        if(obstacles[i].score == 1){
+                            obstacles[i].score = 0;
+                            updateScore(-25);
+                            spawn--;
+                            scene.remove(obstacles[i]);
+                            obstacles.splice(i, 1);
+                        }
+                    } 
+                }
+
+                arwing.box.setFromObject(arwing);
+                if(arwing.box.intersectsBox(obstacles[i].box.setFromObject(obstacles[i]))){
+                    if (obstacles[i].alive == 1){
+                        if(obstacles[i].score == 1){
+
+                            if(obstacles[i].type == "tree"){
+                                updateLife(-70);
+                                console.log("Árbol -70");
+                                spawn--;
+                            }
+                            obstacles[i].alive = 0;
+                        }
+                    }
+                }
+        	}
         }
         if ( shots.length > 0 ){
             for(var j = 0; j < shots.length; j++){
@@ -327,56 +361,66 @@ function generateGame(deltat, now){
                 
                 if(shots[j].position.z == -150) {
                     scene.remove(shots[j]);
+                    shots.splice(j, 1);
                 }
 
-                shots[j].box.setFromObject(shots[j]);
-                for(var k = 0; k < enemies.length; k++){
+                else{
+                
+	                shots[j].box.setFromObject(shots[j]);
+	                for(var k = 0; k < enemies.length; k++){
 
-                    if(shots[j].box.intersectsBox(enemies[k].box) && shots[j].alive == 1){
-                        scene.remove(shots[j]);
+	                    if(shots[j].box.intersectsBox(enemies[k].box) && shots[j].alive == 1){
+	                        scene.remove(shots[j]);
 
-                        if (enemies[k].alive == 1){
-                            if(enemies[k].score == 1){
-                                enemies[k].alive = 0;
-                            }
-                        }
 
-                        if (enemies[k].alive == 0){
-                            if(enemies[k].score == 1){
 
-                                enemies[k].score = 0;
-                                shots[j].alive = 0;
-                                scene.remove(enemies[k]);
+	                        if (enemies[k].alive == 1){
+	                            if(enemies[k].score == 1){
+	                                enemies[k].alive = 0;
+	                            }
+	                        }
 
-                                if(enemies[k].type == "rock"){
-                                    updateScore(500);
-                                    //console.log("Roca +500");
-                                    spawn--;
-                                }
+	                        if (enemies[k].alive == 0){
+	                            if(enemies[k].score == 1){
 
-                                if(enemies[k].type == "tree"){
-                                    updateScore(750);
-                                    //console.log("Árbol +750");
-                                    spawn--;
-                                }
+	                                enemies[k].score = 0;
+	                                shots[j].alive = 0;
+	                                
 
-                                if(enemies[k].type == "spaceship"){
-                                    updateScore(1000);
-                                    //console.log("Nave +1000");
-                                    spawn--;
-                                }
+	                                if(enemies[k].type == "rock"){
+	                                    updateScore(500);
+	                                    scene.remove(enemies[k]);
+	                                    //console.log("Roca +500");
+	                                    spawn--;
+	                                }
 
-                                enemies.splice(k, 1);
-                            }
-                        }
-                    }
-                }
+	                                /*
+	                                if(enemies[k].type == "tree"){
+	                                    updateScore(750);
+	                                    scene.remove(enemies[k]);
+	                                    console.log("Árbol +750");
+	                                    spawn--;
+	                                }*/
+
+	                                if(enemies[k].type == "spaceship"){
+	                                    updateScore(1000);
+	                                    scene.remove(enemies[k]);
+	                                    //console.log("Nave +1000");
+	                                    spawn--;
+	                                }
+
+	                                enemies.splice(k, 1);
+	                            }
+	                        }
+	                    }
+	                }
+            	}
             }
         }
 }
 
 
-function cloneEnemies(type) {
+function cloneObj(type) {
 	var x = getRandomArbitrary(30, -30);
 	var z = getRandomArbitrary(-250, -260);
 	
@@ -387,14 +431,14 @@ function cloneEnemies(type) {
     	clone.position.set(x, y, z);
 	}
 
-	if (type == "tree"){
+	else if (type == "tree"){
 		var clone = tree.clone();
 		clone.position.set(x, -4.5, z);
         clone.rotation.set(0, getRandomArbitrary(10, 20), 0);
 		
 	}
 
-	if (type == "rock"){
+	else if (type == "rock"){
 		var clone = rock.clone();
 		clone.position.set(x, -1, z);	
 	}
@@ -404,7 +448,14 @@ function cloneEnemies(type) {
     clone.alive = 1;
     clone.type = type;
 
-    enemies.push(clone);
+    if (type == "rock" || type == "spaceship"){
+    	enemies.push(clone);
+    }
+
+    else if (type == "tree"){
+    	obstacles.push(clone);
+    }
+    
     scene.add(clone);
 }
 
