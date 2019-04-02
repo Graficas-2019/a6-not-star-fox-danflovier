@@ -286,7 +286,7 @@ function generateGame(deltat, now){
                     if(enemies[i].position.z > 100 ) {  
 
                         if(enemies[i].score == 1){
-                        	console.log("-25 Dejó pasar");
+                        	//console.log("-25 Dejó pasar");
                             enemies[i].score = 0;
                             updateScore(-25);
                             spawn--;
@@ -303,13 +303,13 @@ function generateGame(deltat, now){
                         	
                             if(enemies[i].type == "rock"){
                                 updateLife(-20);
-                                console.log("Roca -20");
+                                //console.log("Roca -20");
                                 spawn--;
                             }
 
                             if(enemies[i].type == "spaceship"){
                                 updateLife(-50);
-                                console.log("Nave -50");
+                                //console.log("Nave -50");
                                 spawn--;
                             }
                             enemies[i].alive = 0;
@@ -346,7 +346,7 @@ function generateGame(deltat, now){
 
                             if(obstacles[i].type == "tree"){
                                 updateLife(-70);
-                                console.log("Árbol -70");
+                                //console.log("Árbol -70");
                                 spawn--;
                             }
                             obstacles[i].alive = 0;
@@ -390,7 +390,7 @@ function generateGame(deltat, now){
 	                                if(enemies[k].type == "rock"){
 	                                    updateScore(500);
 	                                    scene.remove(enemies[k]);
-	                                    //console.log("Roca +500");
+	                                    console.log("Roca +500");
 	                                    spawn--;
 	                                }
 
@@ -405,7 +405,7 @@ function generateGame(deltat, now){
 	                                if(enemies[k].type == "spaceship"){
 	                                    updateScore(1000);
 	                                    scene.remove(enemies[k]);
-	                                    //console.log("Nave +1000");
+	                                    console.log("Nave +1000");
 	                                    spawn--;
 	                                }
 
